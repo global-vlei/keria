@@ -3,8 +3,6 @@
 main package
 """
 
-__version__ = "0.2.0"  # also change in setup.py
-
 import logging
 from hio.help import ogling
 from .monitoring.logs import TruncatedFormatter
