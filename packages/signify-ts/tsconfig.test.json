@@ -1,0 +1,7 @@
+{
+    "include": ["src", "test", "test-integration"],
+    "extends": ["./tsconfig.base.json"],
+    "compilerOptions": {
+        "composite": true
+    }
+}

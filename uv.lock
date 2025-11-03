@@ -507,11 +507,11 @@ dependencies = [
     { name = "qrcode" },
     { name = "semver" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3f/3c/fd7627dc9fb013ab2321213595bd02837533fdca856a7f75de7f9d233b21/keri-1.2.7.tar.gz", hash = "sha256:9e2687df544b2bc07ec2d63fa2fe906e8e8ab20bd5b788279da35724e443a223", size = 467791, upload-time = "2025-09-11T13:48:28.728Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/80/7e/3c962c96a387f8077d06f59ce5d9c32017e921939258e06982a60a98dc69/keri-1.2.4.tar.gz", hash = "sha256:ed74beeea63e86841c5a7244278f8bf29d8ba50bc33ece3d66ea15cb8c98ebaa", size = 463747, upload-time = "2025-01-20T00:09:59.758Z" }
 
 [[package]]
 name = "keria"
-version = "0.2.0"
+version = "0.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "apispec" },
