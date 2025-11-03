@@ -290,9 +290,7 @@ async function issueCredential(
             iss: result.iss,
         });
 
-        const op = await client
-            .ipex()
-            .submitGrant(name, grant, gsigs, end, [data.a.i]);
+        const op = await client.ipex().submitGrant(name, grant, gsigs, end);
         await waitOperation(client, op);
     }
 
@@ -322,9 +320,7 @@ async function multisigAdmitCredential(
         datetime: TIME,
     });
 
-    const op = await client
-        .ipex()
-        .submitAdmit(groupName, admit, sigs, end, [issuerPrefix]);
+    const op = await client.ipex().submitAdmit(groupName, admit, sigs, end);
 
     const mstate = gHab['state'];
     const seal = [

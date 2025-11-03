@@ -261,7 +261,7 @@ describe('Ipex', () => {
         assert.deepStrictEqual(ngsigs, gsigs);
         assert.deepStrictEqual(ngend, ngend);
 
-        await ipex.submitGrant('multisig', ng, ngsigs, ngend, [holder]);
+        await ipex.submitGrant('multisig', ng, ngsigs, ngend);
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
             lastCall[0],
@@ -294,7 +294,7 @@ describe('Ipex', () => {
             'AAC4MTRQR-U8_3Hf53f2nJuh3n93lauXSHUkF1Yk2diTHwF-qkcBHn_jd-6pgRnRtBV2CInfwZyOsSL2CrRyuNEN',
         ]);
 
-        await ipex.submitAdmit('multisig', admit, asigs, aend, [holder]);
+        await ipex.submitAdmit('multisig', admit, asigs, aend);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
             lastCall[0],
@@ -377,7 +377,7 @@ describe('Ipex', () => {
 
             assert.equal(applyEnd, '');
 
-            await ipex.submitApply('multisig', apply, applySigs, [holder]);
+            await ipex.submitApply('multisig', apply, applySigs);
             let lastCall =
                 fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
             assert.equal(
@@ -431,9 +431,7 @@ describe('Ipex', () => {
             ]);
             assert.equal(offerEnd, '');
 
-            await ipex.submitOffer('multisig', offer, offerSigs, offerEnd, [
-                holder,
-            ]);
+            await ipex.submitOffer('multisig', offer, offerSigs, offerEnd);
             lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
             assert.equal(
                 lastCall[0],
@@ -470,7 +468,7 @@ describe('Ipex', () => {
             ]);
             assert.equal(agreeEnd, '');
 
-            await ipex.submitAgree('multisig', agree, agreeSigs, [holder]);
+            await ipex.submitAgree('multisig', agree, agreeSigs);
             lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
             assert.equal(
                 lastCall[0],
@@ -565,7 +563,7 @@ describe('Ipex', () => {
             assert.deepStrictEqual(ngsigs, gsigs);
             assert.deepStrictEqual(ngend, ngend);
 
-            await ipex.submitGrant('multisig', ng, ngsigs, ngend, [holder]);
+            await ipex.submitGrant('multisig', ng, ngsigs, ngend);
             lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
             assert.equal(
                 lastCall[0],
@@ -598,7 +596,7 @@ describe('Ipex', () => {
                 'AABqIUE6czxB5BotjxFUZT9Gu8tkFkAx7bOYQzWD422r-HS8z_6gaNuIlpnABHjxlX7PEXFDTj8WnoGVW197XlQP',
             ]);
 
-            await ipex.submitAdmit('multisig', admit, asigs, aend, [holder]);
+            await ipex.submitAdmit('multisig', admit, asigs, aend);
             lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
             assert.equal(
                 lastCall[0],
@@ -667,9 +665,7 @@ describe('Ipex', () => {
         ]);
         assert.equal(offerEnd, '');
 
-        await ipex.submitOffer('multisig', offer, offerSigs, offerEnd, [
-            holder,
-        ]);
+        await ipex.submitOffer('multisig', offer, offerSigs, offerEnd);
         const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
             lastCall[0],

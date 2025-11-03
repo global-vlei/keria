@@ -51,9 +51,7 @@ export async function admitSinglesig(
         recipient: recipientAid.prefix,
     });
 
-    await client
-        .ipex()
-        .submitAdmit(aidName, admit, sigs, aend, [recipientAid.prefix]);
+    await client.ipex().submitAdmit(aidName, admit, sigs, aend);
 }
 
 /**
