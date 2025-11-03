@@ -59,7 +59,7 @@ services:
     configs:
       - source: keria.json
         target: /keria/config/keri/cf/keria.json
-    command: start --config-dir /keria/config --config-file keria --name agent
+    command: start --config-dir /keria/config --config-file keria
     ports:
       - 3901:3901
       - 3902:3902

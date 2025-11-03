@@ -290,6 +290,7 @@ class Agency(doing.DoDoer):
         else:
             config[habName] = {}
 
+        config[habName]["dt"] = config[habName].get("dt", timestamp)
         config[habName]["curls"] = config[habName].get("curls", [])
         config["iurls"] = config.get("iurls", [])
         config["durls"] = config.get("durls", [])

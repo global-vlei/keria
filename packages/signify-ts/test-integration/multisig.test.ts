@@ -903,6 +903,7 @@ test('Verify admit notifications for members', async () => {
     await waitAndMarkNotification(client1, '/exn/ipex/admit');
     await waitAndMarkNotification(client2, '/exn/ipex/admit');
     await waitAndMarkNotification(client3, '/exn/ipex/admit');
+    await waitAndMarkNotification(client4, '/exn/ipex/admit');
 });
 
 test('Ensure no pending operations', async () => {

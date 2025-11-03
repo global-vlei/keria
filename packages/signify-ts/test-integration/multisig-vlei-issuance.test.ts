@@ -154,6 +154,16 @@ test('multisig-vlei-issuance', async function run() {
         clientECR.oobis().get('ECR', 'agent'),
     ]);
 
+    assert.equal(oobiGAR1.oobis.length, 1);
+    assert.equal(oobiGAR2.oobis.length, 1);
+    assert.equal(oobiQAR1.oobis.length, 1);
+    assert.equal(oobiQAR2.oobis.length, 1);
+    assert.equal(oobiQAR3.oobis.length, 1);
+    assert.equal(oobiLAR1.oobis.length, 1);
+    assert.equal(oobiLAR2.oobis.length, 1);
+    assert.equal(oobiLAR3.oobis.length, 1);
+    assert.equal(oobiECR.oobis.length, 1);
+
     await Promise.all([
         getOrCreateContact(clientGAR1, 'GAR2', oobiGAR2.oobis[0]),
         getOrCreateContact(clientGAR2, 'GAR1', oobiGAR1.oobis[0]),
