@@ -8,6 +8,8 @@ services and endpoint for IPEX message managements
 
 import falcon
 from keri import core
+from keri.app import habbing
+from keri.vdr import credentialing
 from keri.core import eventing, serdering
 from keria.core import httping, longrunning
 
@@ -96,7 +98,7 @@ class IpexAdmitCollectionEnd:
         ims = eventing.messagize(serder=serder, sigers=sigers, seal=seal)
 
         # make a copy and parse
-        agent.hby.psr.parseOne(ims=bytearray(ims))
+        agent.parser.parseOne(ims=bytearray(ims))
 
         # now get rid of the event so we can pass it as atc to send
         del ims[: serder.size]
@@ -179,7 +181,7 @@ class IpexGrantCollectionEnd:
         ims = ims + atc.encode("utf-8")
 
         # make a copy and parse
-        agent.hby.psr.parseOne(ims=bytearray(ims))
+        agent.parser.parseOne(ims=bytearray(ims))
 
         # now get rid of the event so we can pass it as atc to send
         del ims[: serder.size]
@@ -263,7 +265,7 @@ class IpexApplyCollectionEnd:
         ims = eventing.messagize(serder=serder, sigers=sigers, seal=seal)
 
         # make a copy and parse
-        agent.hby.psr.parseOne(ims=bytearray(ims))
+        agent.parser.parseOne(ims=bytearray(ims))
 
         agent.exchanges.append(dict(said=serder.said, pre=hab.pre, topic="credential"))
         return agent.monitor.submit(
@@ -341,7 +343,7 @@ class IpexOfferCollectionEnd:
         ims = ims + atc.encode("utf-8")
 
         # make a copy and parse
-        agent.hby.psr.parseOne(ims=bytearray(ims))
+        agent.parser.parseOne(ims=bytearray(ims))
 
         agent.exchanges.append(dict(said=serder.said, pre=hab.pre, topic="credential"))
         return agent.monitor.submit(
@@ -417,9 +419,77 @@ class IpexAgreeCollectionEnd:
         ims = eventing.messagize(serder=serder, sigers=sigers, seal=seal)
 
         # make a copy and parse
-        agent.hby.psr.parseOne(ims=bytearray(ims))
+        agent.parser.parseOne(ims=bytearray(ims))
 
         agent.exchanges.append(dict(said=serder.said, pre=hab.pre, topic="credential"))
         return agent.monitor.submit(
             serder.said, longrunning.OpTypes.exchange, metadata=dict(said=serder.said)
         )
+
+
+def gatherArtifacts(
+    hby: habbing.Habery,
+    reger: credentialing.Reger,
+    creder: serdering.SerderACDC,
+    recp: str,
+):
+    """
+    Gathers a list from the local database of all dependent credential artifacts needed by the
+    recipient to fully verify an ACDC including all KEL and TEL events for the issuer and issuee and
+    any of their (delegators.
+
+    Parameters:
+        hby: Habery to read KELs from
+        reger: Registry to read registries and ACDCs from
+        creder: The credential to send
+        recp: recipient
+
+    Returns:
+        A list of (Serder, attachment) tuples to send
+    """
+    messages = []
+    issr = creder.issuer
+    isse = creder.attrib["i"] if "i" in creder.attrib else None
+    regk = creder.regi
+
+    # Get issuer delegation parent KELs
+    ikever = hby.db.kevers[issr]
+    for msg in hby.db.cloneDelegation(ikever):
+        serder = serdering.SerderKERI(raw=msg)
+        atc = msg[serder.size :]
+        messages.append((serder, atc))
+
+    # get issuer KEL
+    for msg in hby.db.clonePreIter(pre=issr):
+        serder = serdering.SerderKERI(raw=msg)
+        atc = msg[serder.size :]
+        messages.append((serder, atc))
+
+    # If sending to recipient that is no the issuee then
+    # Get issuee KEL and delegation parent KELs
+    if isse != recp:
+        ikever = hby.db.kevers[isse]
+        for msg in hby.db.cloneDelegation(ikever):
+            serder = serdering.SerderKERI(raw=msg)
+            atc = msg[serder.size :]
+            messages.append((serder, atc))
+
+        for msg in hby.db.clonePreIter(pre=isse):
+            serder = serdering.SerderKERI(raw=msg)
+            atc = msg[serder.size :]
+            messages.append((serder, atc))
+
+    # Get registry TEL
+    if regk is not None:
+        for msg in reger.clonePreIter(pre=regk):
+            serder = serdering.SerderKERI(raw=msg)
+            atc = msg[serder.size :]
+            messages.append((serder, atc))
+
+    # get ACDC iss or bis event
+    for msg in reger.clonePreIter(pre=creder.said):
+        serder = serdering.SerderKERI(raw=msg)
+        atc = msg[serder.size :]
+        messages.append((serder, atc))
+
+    return messages

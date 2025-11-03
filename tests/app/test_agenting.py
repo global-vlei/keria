@@ -33,32 +33,32 @@ from keri.help import nowIso8601
 from keri.vdr import credentialing
 
 from keria.app import agenting, aiding
-from keria.core import longrunning
+from keria.core import longrunning, httping
 from keria.testing.testing_helper import SCRIPTS_DIR
 
 
 def test_setup_no_http():
-    doers = agenting.setupDoers(
-        agenting.KERIAServerConfig(
-            name="test",
-            adminPort=1234,
-            bootPort=5678,
-            httpPort=None,
-        )
+    config = agenting.KERIAServerConfig(
+        name="test",
+        adminPort=1234,
+        bootPort=5678,
+        httpPort=None,
     )
+    agency = agenting.createAgency(config, temp=True, cf=None)
+    doers = agenting.setupDoers(agency, config)
     assert len(doers) == 3
     assert isinstance(doers[0], agenting.Agency) is True
 
 
 def test_setup():
-    doers = agenting.setupDoers(
-        agenting.KERIAServerConfig(
-            name="test",
-            adminPort=1234,
-            bootPort=5678,
-            httpPort=9999,
-        )
+    config = agenting.KERIAServerConfig(
+        name="test",
+        adminPort=1234,
+        bootPort=5678,
+        httpPort=9999,
     )
+    agency = agenting.createAgency(config, temp=True, cf=None)
+    doers = agenting.setupDoers(agency, config)
     assert len(doers) == 4
 
 
@@ -137,13 +137,13 @@ def test_graceful_shutdown_doer():
         tock = 0.03125
         limit = 1.0
         doist = doing.Doist(limit=limit, tock=tock, real=True)
-        shutdownDoer = agenting.GracefulShutdownDoer(doist=doist, agency=agency)
+        shutdownDoer = agenting.GracefulShutdownDoer(agency=agency)
         doers = [agency, shutdownDoer]
         doist.enter(doers=doers)
 
-        caid = "ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose"
+        caid = "ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtBose"
         agent = agency.create(caid, salt=salter.qb64)
-        assert agent.pre == "EIAEKYpTygdBtFHBrHKWeh0aYCdx0ZJqZtzQLFnaDB2b"
+        assert agent.pre == "EJjzRbtuVaxE6ktdd2oC2gszdSpzIi-YrZcmMhHtXggM"
         assert len(agency.agents) == 1, "Agent not created as expected."
 
         assert shutdownDoer.shutdown_received is False
@@ -157,7 +157,11 @@ def test_graceful_shutdown_doer():
         # See test_shutdown_signals test above for an example of sending signals.
         shutdownDoer.handle_sigterm(signal.SIGTERM, None)
 
-        doist.do(doers=doers)
+        try:  # need to catch the KeyboardInterrupt so that Pytest does not stop executing after this test.
+            doist.do(doers=doers)
+        except KeyboardInterrupt as ex:
+            # This simulates the Doist loop being interrupted by the shutdown signal
+            assert str(ex) == "Graceful shutdown finished, causing Doist loop to exit"
         assert shutdownDoer.shutdown_received is True
 
         # shutdownDoer.shutdown_agents(agency.agents)
@@ -238,7 +242,7 @@ def test_load_tocks_config(helpers):
 
 
 def test_agency():
-    salt = b"0123456789abcdef"
+    salt = b"0123456789aaaaaa"
     salter = core.Salter(raw=salt)
     cf = configing.Configer(
         name="keria", headDirPath=SCRIPTS_DIR, temp=True, reopen=True, clear=False
@@ -256,7 +260,7 @@ def test_agency():
             configDir=SCRIPTS_DIR,
         )
         assert agency.cf is not None
-        assert agency.cf.path.endswith("scripts/keri/cf/keria.json") is True
+        assert agency.cf.path.endswith("keri/cf/keria.json") is True
 
         tock = 0.03125
         limit = 1.0
@@ -265,14 +269,14 @@ def test_agency():
 
         caid = "ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose"
         agent = agency.create(caid, salt=salter.qb64)
-        assert agent.pre == "EIAEKYpTygdBtFHBrHKWeh0aYCdx0ZJqZtzQLFnaDB2b"
+        assert agent.pre == "ELu7SsaPCHNcyz-eqqPfOU6rOmhH7ayGkZJxvCy0Z1yC"
 
         badcaid = "E987eerAdhmvrjDeam2eAO2SR5niCgnjAJXJHtJoe"
         agent = agency.get(badcaid)
         assert agent is None
 
         agent = agency.get(caid)
-        assert agent.pre == "EIAEKYpTygdBtFHBrHKWeh0aYCdx0ZJqZtzQLFnaDB2b"
+        assert agent.pre == "ELu7SsaPCHNcyz-eqqPfOU6rOmhH7ayGkZJxvCy0Z1yC"
 
         agency.incept(caid, hab.pre)
 
@@ -280,7 +284,7 @@ def test_agency():
         assert agent is None
 
         agent = agency.lookup(hab.pre)
-        assert agent.pre == "EIAEKYpTygdBtFHBrHKWeh0aYCdx0ZJqZtzQLFnaDB2b"
+        assert agent.pre == "ELu7SsaPCHNcyz-eqqPfOU6rOmhH7ayGkZJxvCy0Z1yC"
 
         # Create non-temp Agency and test reload of agent from disk
         base = "keria-temp"
@@ -312,7 +316,7 @@ def test_agency():
 
         caid = "ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose"
         agent = agency.create(caid, salt=salter.qb64)
-        assert agent.pre == "EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei"
+        assert agent.pre == "EBtONOpwylm2krDPNyvfN8F1dlbAxpGcKBcY7WRzs3aq"
 
         # Rcreate the agency to see if agent is reloaded from disk
         agency = agenting.Agency(
@@ -325,7 +329,7 @@ def test_agency():
         doist.enter(doers=[agency])
 
         agent = agency.get(caid)
-        assert agent.pre == "EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei"
+        assert agent.pre == "EBtONOpwylm2krDPNyvfN8F1dlbAxpGcKBcY7WRzs3aq"
 
         # Clean up afterwards
         if os.path.exists(f"/usr/local/var/keri/db/{base}"):
@@ -343,7 +347,7 @@ def test_agency():
 
 
 def test_agency_without_config_file():
-    salt = b"0123456789abcdef"
+    salt = b"0123456789bbbbbb"
     salter = core.Salter(raw=salt)
     cf = configing.Configer(
         name="keria", headDirPath=SCRIPTS_DIR, temp=True, reopen=True, clear=False
@@ -366,13 +370,13 @@ def test_agency_without_config_file():
         doist.extend(doers=[agency])
 
         # Ensure we can still create agent
-        caid = "ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose"
+        caid = "ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtCose"
         agent = agency.create(caid, salt=salter.qb64)
-        assert agent.pre == "EIAEKYpTygdBtFHBrHKWeh0aYCdx0ZJqZtzQLFnaDB2b"
+        assert agent.pre == "EMoA-qVulQDVuRD08WkxzFyMUcmelTew0cvDnOOzjwPr"
 
 
 def test_agency_with_urls_from_arguments():
-    salt = b"0123456789abcdef"
+    salt = b"0123456789dddddd"
     salter = core.Salter(raw=salt)
     cf = configing.Configer(
         name="keria", headDirPath=SCRIPTS_DIR, temp=True, reopen=True, clear=False
@@ -400,9 +404,9 @@ def test_agency_with_urls_from_arguments():
         doist.extend(doers=[agency])
 
         # Ensure we can still create agent
-        caid = "ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose"
+        caid = "ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtRose"
         agent = agency.create(caid, salt=salter.qb64)
-        assert agent.pre == "EIAEKYpTygdBtFHBrHKWeh0aYCdx0ZJqZtzQLFnaDB2b"
+        assert agent.pre == "EK-DLhw2jJ__SNNaSmSwfkA0gHtsAMAFnx21xOKncX23"
 
         assert agent.hby.cf is not None
         assert agent.hby.cf.get()[f"agent-{caid}"]["curls"] == curls
@@ -450,14 +454,14 @@ def test_unprotected_boot_ends(helpers):
 
 def test_protected_boot_ends(helpers):
     credentials = [
-        dict(bran=b"0123456789abcdefghija", username="user", password="secret"),
+        dict(bran=b"0123456789aaaaaaghija", username="user", password="secret"),
         dict(
-            bran=b"0123456789abcdefghijb",
+            bran=b"0123456789bbbbbbghijb",
             username="admin",
             password="secret with spaces",
         ),
         dict(
-            bran=b"0123456789abcdefghijc",
+            bran=b"0123456789ccccccghijc",
             username="admin",
             password="secret : with colon",
         ),
@@ -610,8 +614,8 @@ def test_witnesser(helpers):
 
 
 def test_keystate_ends(helpers):
-    caid = "ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose"
-    salt = b"0123456789abcdef"
+    caid = "ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtDose"
+    salt = b"0123456789cccccc"
     salter = core.Salter(raw=salt)
     cf = configing.Configer(
         name="keria", headDirPath=SCRIPTS_DIR, temp=True, reopen=True, clear=False
@@ -643,14 +647,14 @@ def test_keystate_ends(helpers):
 
         state = states[0]
         assert state["i"] == hab.pre
-        assert state["d"] == "EIaGMMWJFPmtXznY1IIiKDIrg-vIyge6mBl2QV8dDjI3"
+        assert state["d"] == "EJ9ZaKf0e89CsaowWPjEpJ_oZc-OYWgRNTYULjQcGOwp"
         assert state["et"] == "icp"
-        assert state["k"] == ["DGmIfLmgErg4zFHfPwaDckLNxsLqc5iS_P0QbLjbWR0I"]
-        assert state["n"] == ["EJhRr10e5p7LVB6JwLDIcgqsISktnfe5m60O_I2zZO6N"]
+        assert state["k"] == ["DFbG433Fct2JBjNzRFT_lnk_-7Ymnl5Ig6RRsEE9fCS2"]
+        assert state["n"] == ["EIgTsJ65kMPQGWXM5FB81Hcgyfz9iv4gWmZVP5a_RIOF"]
         assert state["ee"] == {
             "ba": [],
             "br": [],
-            "d": "EIaGMMWJFPmtXznY1IIiKDIrg-vIyge6mBl2QV8dDjI3",
+            "d": "EJ9ZaKf0e89CsaowWPjEpJ_oZc-OYWgRNTYULjQcGOwp",
             "s": "0",
         }
 
@@ -952,13 +956,13 @@ class MockHttpServer:
 def test_createHttpServer(monkeypatch):
     port = 5632
     app = falcon.App()
-    server = agenting.createHttpServer(port, app)
+    server = httping.createHttpServer(port, app)
     assert isinstance(server, http.Server)
 
     monkeypatch.setattr(hio.core.tcp, "ServerTls", MockServerTls)
     monkeypatch.setattr(hio.core.http, "Server", MockHttpServer)
 
-    server = agenting.createHttpServer(
+    server = httping.createHttpServer(
         port, app, keypath="keypath", certpath="certpath", cafilepath="cafilepath"
     )
 
@@ -1144,9 +1148,9 @@ def test_submitter(seeder, helpers):
         assert resSubmit.text == json.dumps(
             dict(
                 name="submit.EKOrePIIU8ynKwOOLxs56ZxxQswUFNV8-cyYFt3nBJHR",
-                metadata={"alias": "pal", "sn": 0},
-                done=True,
                 error=None,
+                done=True,
+                metadata={"alias": "pal", "sn": 0},
                 response={
                     "vn": [1, 0],
                     "i": "EKOrePIIU8ynKwOOLxs56ZxxQswUFNV8-cyYFt3nBJHR",

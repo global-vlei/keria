@@ -11,8 +11,10 @@ import falcon
 from keri import core
 from keri.core import coring, eventing, serdering
 from keri.peer import exchanging
-
+from keri.help import ogler
 from keria.core import httping
+
+logger = ogler.getLogger()
 
 
 def loadEnds(app):
@@ -106,6 +108,15 @@ class ExchangeCollectionEnd:
         serder = serdering.SerderKERI(sad=ked)
         sigers = [core.Siger(qb64=sig) for sig in sigs]
 
+        logger.info(
+            "[%s | %s]: route %s received exn %s being sent to [%s]",
+            name,
+            hab.pre,
+            serder.ked["r"],
+            serder.said,
+            recp,
+        )
+
         # Now create the stream to send, need the signer seal
         kever = hab.kever
         seal = eventing.SealEvent(
@@ -122,6 +133,7 @@ class ExchangeCollectionEnd:
 
         msg = dict(said=serder.said, pre=hab.pre, topic=topic)
 
+        logger.info("[%s | %s]: appending %s", name, hab.pre, json.dumps(msg))
         agent.exchanges.append(msg)
 
         rep.status = falcon.HTTP_202
