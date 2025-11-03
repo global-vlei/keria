@@ -11,8 +11,10 @@ import falcon
 from keri import core
 from keri.core import coring, eventing, serdering
 from keri.peer import exchanging
-
+from keri.help import ogler
 from keria.core import httping
+
+logger = ogler.getLogger()
 
 
 def loadEnds(app):
@@ -64,6 +66,11 @@ class ExchangeCollectionEnd:
                     atc:
                       type: object
                       description: The additional attachments for the exn message.
+                    rec:
+                      type: array
+                      items:
+                        type: string
+                      description: The recipients of the exn message.
                     tpc:
                       type: string
                       description: The topic of the exn message.
@@ -94,17 +101,27 @@ class ExchangeCollectionEnd:
         ked = httping.getRequiredParam(body, "exn")
         sigs = httping.getRequiredParam(body, "sigs")
         atc = httping.getRequiredParam(body, "atc")
+        rec = httping.getRequiredParam(body, "rec")
         topic = httping.getRequiredParam(body, "tpc")
 
-        recp = ked.get("rp") or ked.get("a", {}).get("i")
-        if recp not in agent.hby.kevers:
-            raise falcon.HTTPBadRequest(
-                description=f"attempt to send to unknown AID={recp}"
-            )
+        for recp in rec:  # Have to verify we already know all the recipients.
+            if recp not in agent.hby.kevers:
+                raise falcon.HTTPBadRequest(
+                    description=f"attempt to send to unknown AID={recp}"
+                )
 
         # use that data to create th Serder and Sigers for the exn
         serder = serdering.SerderKERI(sad=ked)
         sigers = [core.Siger(qb64=sig) for sig in sigs]
+
+        logger.info(
+            "[%s | %s]: route %s received exn %s being sent to [%s]",
+            name,
+            hab.pre,
+            serder.ked["r"],
+            serder.said,
+            ", ".join(rec),
+        )
 
         # Now create the stream to send, need the signer seal
         kever = hab.kever
@@ -120,8 +137,9 @@ class ExchangeCollectionEnd:
         # make a copy and parse
         agent.hby.psr.parseOne(ims=bytearray(ims))
 
-        msg = dict(said=serder.said, pre=hab.pre, topic=topic)
+        msg = dict(said=serder.said, pre=hab.pre, rec=rec, topic=topic)
 
+        logger.info("[%s | %s]: appending %s", name, hab.pre, json.dumps(msg))
         agent.exchanges.append(msg)
 
         rep.status = falcon.HTTP_202

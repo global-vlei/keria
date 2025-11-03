@@ -29,7 +29,7 @@ class IndexRecord:
 
 class AgencyBaser(dbing.LMDBer):
     """
-    Agency database for tracking Agent tenants in this KERIA instance.
+    Agency database for tracking Agent tenants and their managed identifiers in this KERIA instance.
 
     """
 
@@ -49,7 +49,7 @@ class AgencyBaser(dbing.LMDBer):
                 default name='main'
             temp is boolean, assign to .temp
                 True then open in temporary directory, clear on close
-                Othewise then open persistent directory, do not clear on close
+                Otherwise then open persistent directory, do not clear on close
                 default temp=False
             headDirPath is optional str head directory pathname for main database
                 If not provided use default .HeadDirpath
@@ -59,17 +59,26 @@ class AgencyBaser(dbing.LMDBer):
             reopen is boolean, IF True then database will be reopened by this init
                 default reopen=True
 
+        Attributes:
+            .agnt values are Prefixer of Agent AID
+                keyed by controller AID (caid).
+                Maps Controller AIDs to their Signify Agent AID (agent.pre).
+            .ctrl values are Prefixer of Controller AID (caid)
+                keyed by Agent AID.
+                Maps Agent AIDs to their Signify Controller AID (caid).
+            .aids values are Prefixer of Controller AID (caid)
+                keyed by managed AID.
+                Maps managed AIDs to their Signify Controller AID (caid).
+
         Notes:
+            dupsort=True for sub DB means allow unique (key,pair) duplicates at a key.
+            Duplicate means that is more than one value at a key but not a redundant
+            copies a (key,value) pair per key. In other words the pair (key,value)
+            must be unique both key and value in combination.
+            Attempting to put the same (key,value) pair a second time does
+            not add another copy.
 
-        dupsort=True for sub DB means allow unique (key,pair) duplicates at a key.
-        Duplicate means that is more than one value at a key but not a redundant
-        copies a (key,value) pair per key. In other words the pair (key,value)
-        must be unique both key and value in combination.
-        Attempting to put the same (key,value) pair a second time does
-        not add another copy.
-
-        Duplicates are inserted in lexocographic order by value, insertion order.
-
+            Duplicates are inserted in lexicographic order by value, insertion order.
         """
         if perm is None:
             perm = self.Perm  # defaults to restricted permissions for non temp
@@ -220,6 +229,26 @@ class Seeker(dbing.LMDBer):
 
             value = "".join(values)
             db.add(keys=(value,), val=saider)
+
+    def unindex(self, said):
+        if (saider := self.reger.saved.get(keys=(said,))) is None:
+            raise ValueError(f"{said} is not a verified credential")
+
+        creder = self.reger.creds.get(keys=(saider.qb64,))
+        indexes = self.schIdx.get(keys=(creder.schema,))
+        if not indexes:
+            raise ValueError(f"No known indexes for schema {creder.schema}")
+
+        for index in indexes:
+            db = self.indexes[index]
+            idx = self.dynIdx.get(keys=(index,))
+            values = []
+            for path in idx.paths:
+                pather = coring.Pather(qb64=path)
+                values.append(pather.resolve(creder.sad))
+
+            value = "".join(values)
+            db.rem(keys=(value,), val=saider)
 
     def generateIndexes(self, said):
         """Parse schema of said, create schIdx entry keyed to said of schema and the subkey indexes in

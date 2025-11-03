@@ -9,6 +9,7 @@ KERIA Agent server start command line interface (CLI) command
 import argparse
 import os
 
+
 from keri import __version__
 from keri import help
 
@@ -117,6 +118,7 @@ parser.add_argument(
     default=None,
     help="path of the log file. If not defined, logs will not be written to the file.",
 )
+parser.add_argument("--logrequests", help="log HTTP requests", action="store_true")
 parser.add_argument(
     "--experimental-boot-password",
     help="Experimental password for boot endpoint. Enables HTTP Basic Authentication for the boot endpoint. Only meant to be used for testing purposes.",
@@ -150,6 +152,7 @@ def launch(args):
             caFilePath=args.cafilepath,
             logLevel=args.loglevel,
             logFile=args.logfile,
+            logRequests=args.logrequests if args.logrequests else False,
             cors=os.getenv("KERI_AGENT_CORS", "false").lower() in ("true", "1"),
             releaseTimeout=int(os.getenv("KERIA_RELEASER_TIMEOUT", "86400")),
             curls=getListVariable("KERIA_CURLS"),
