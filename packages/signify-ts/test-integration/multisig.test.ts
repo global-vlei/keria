@@ -740,7 +740,7 @@ test('Grant credential', async () => {
 
     const op1 = await client1
         .ipex()
-        .submitGrant('multisig', grant1, gsigs1, gend1, [aid4.prefix]);
+        .submitGrant('multisig', grant1, gsigs1, gend1);
 
     const ghab1 = await client1.identifiers().get('multisig');
     const gstate1 = ghab1['state'];
@@ -784,7 +784,7 @@ test('Grant credential', async () => {
 
     const op2 = await client2
         .ipex()
-        .submitGrant('multisig', grant2, gsigs2, gend2, [aid4.prefix]);
+        .submitGrant('multisig', grant2, gsigs2, gend2);
 
     const ghab2 = await client2.identifiers().get('multisig');
     const gstate2 = ghab2['state'];
@@ -828,7 +828,7 @@ test('Grant credential', async () => {
 
     const op3 = await client3
         .ipex()
-        .submitGrant('multisig', grant3, gsigs3, gend3, [aid4.prefix]);
+        .submitGrant('multisig', grant3, gsigs3, gend3);
 
     const ghab3 = await client3.identifiers().get('multisig');
     const gstate3 = ghab3['state'];
@@ -882,9 +882,7 @@ test('Admit credential', async () => {
         recipient: res.exn.i,
     });
 
-    const op4 = await client4
-        .ipex()
-        .submitAdmit('holder', admit, asigs, aend, [res.exn.i]);
+    const op4 = await client4.ipex().submitAdmit('holder', admit, asigs, aend);
 
     await waitOperation(client4, op4);
 
