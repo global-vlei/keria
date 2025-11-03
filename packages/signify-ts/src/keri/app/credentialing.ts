@@ -776,16 +776,10 @@ export class Ipex {
             );
     }
 
-    async submitApply(
-        name: string,
-        exn: Serder,
-        sigs: string[],
-        recp: string[]
-    ): Promise<any> {
+    async submitApply(name: string, exn: Serder, sigs: string[]): Promise<any> {
         const body = {
             exn: exn.sad,
             sigs,
-            rec: recp,
         };
 
         const response = await this.client.fetch(
@@ -823,14 +817,12 @@ export class Ipex {
         name: string,
         exn: Serder,
         sigs: string[],
-        atc: string,
-        recp: string[]
+        atc: string
     ): Promise<any> {
         const body = {
             exn: exn.sad,
             sigs,
             atc,
-            rec: recp,
         };
 
         const response = await this.client.fetch(
@@ -864,16 +856,10 @@ export class Ipex {
             );
     }
 
-    async submitAgree(
-        name: string,
-        exn: Serder,
-        sigs: string[],
-        recp: string[]
-    ): Promise<any> {
+    async submitAgree(name: string, exn: Serder, sigs: string[]): Promise<any> {
         const body = {
             exn: exn.sad,
             sigs,
-            rec: recp,
         };
 
         const response = await this.client.fetch(
@@ -935,14 +921,12 @@ export class Ipex {
         name: string,
         exn: Serder,
         sigs: string[],
-        atc: string,
-        recp: string[]
+        atc: string
     ): Promise<any> {
         const body = {
             exn: exn.sad,
             sigs: sigs,
             atc: atc,
-            rec: recp,
         };
 
         const response = await this.client.fetch(
@@ -980,14 +964,12 @@ export class Ipex {
         name: string,
         exn: Serder,
         sigs: string[],
-        atc: string,
-        recp: string[]
+        atc: string
     ): Promise<any> {
         const body = {
             exn: exn.sad,
             sigs: sigs,
             atc: atc,
-            rec: recp,
         };
 
         const response = await this.client.fetch(
