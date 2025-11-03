@@ -98,7 +98,7 @@ class IpexAdmitCollectionEnd:
         ims = eventing.messagize(serder=serder, sigers=sigers, seal=seal)
 
         # make a copy and parse
-        agent.parser.parseOne(ims=bytearray(ims))
+        agent.hby.psr.parseOne(ims=bytearray(ims))
 
         # now get rid of the event so we can pass it as atc to send
         del ims[: serder.size]
@@ -181,7 +181,7 @@ class IpexGrantCollectionEnd:
         ims = ims + atc.encode("utf-8")
 
         # make a copy and parse
-        agent.parser.parseOne(ims=bytearray(ims))
+        agent.hby.psr.parseOne(ims=bytearray(ims))
 
         # now get rid of the event so we can pass it as atc to send
         del ims[: serder.size]
@@ -265,7 +265,7 @@ class IpexApplyCollectionEnd:
         ims = eventing.messagize(serder=serder, sigers=sigers, seal=seal)
 
         # make a copy and parse
-        agent.parser.parseOne(ims=bytearray(ims))
+        agent.hby.psr.parseOne(ims=bytearray(ims))
 
         agent.exchanges.append(dict(said=serder.said, pre=hab.pre, topic="credential"))
         return agent.monitor.submit(
@@ -343,7 +343,7 @@ class IpexOfferCollectionEnd:
         ims = ims + atc.encode("utf-8")
 
         # make a copy and parse
-        agent.parser.parseOne(ims=bytearray(ims))
+        agent.hby.psr.parseOne(ims=bytearray(ims))
 
         agent.exchanges.append(dict(said=serder.said, pre=hab.pre, topic="credential"))
         return agent.monitor.submit(
@@ -419,7 +419,7 @@ class IpexAgreeCollectionEnd:
         ims = eventing.messagize(serder=serder, sigers=sigers, seal=seal)
 
         # make a copy and parse
-        agent.parser.parseOne(ims=bytearray(ims))
+        agent.hby.psr.parseOne(ims=bytearray(ims))
 
         agent.exchanges.append(dict(said=serder.said, pre=hab.pre, topic="credential"))
         return agent.monitor.submit(
