@@ -58,8 +58,8 @@ services:
       <<: *python-env
     configs:
       - source: keria.json
-        target: /keria/config/keri/cf/keria.json
-    command: start --config-dir /keria/config --config-file keria
+        target: /home/keria/config/keri/cf/keria.json
+    command: start --config-dir /home/keria/config --config-file keria
     ports:
       - 3901:3901
       - 3902:3902

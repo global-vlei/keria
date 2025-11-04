@@ -1,5 +1,8 @@
-FROM python:3.12.8-alpine3.21 AS builder
+FROM python:3.12.8-alpine3.21 AS base
+RUN addgroup -g 1000 keria && adduser -D -u 1000 -G keria keria
+WORKDIR /home/keria
 
+FROM base AS builder
 RUN apk --no-cache add \
     curl \
     bash \
@@ -8,36 +11,33 @@ RUN apk --no-cache add \
     libsodium \
     libsodium-dev
 
+USER keria
+
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-COPY --from=ghcr.io/astral-sh/uv:0.9.5 /uv /uvx /bin/
-
-WORKDIR /keria
+COPY --from=ghcr.io/astral-sh/uv:0.9.5 --chown=keria:keria /uv /uvx /bin/
 
 COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --locked --no-dev --no-editable
 
-COPY src/ src/
+COPY --chown=keria:keria src/ src/
 RUN uv sync --locked --no-dev
 
-FROM python:3.12.8-alpine3.21
-WORKDIR /keria
-
+FROM base AS runner
 RUN apk --no-cache add \
     bash \
     curl \
     libsodium-dev \
     gcc
 
-COPY --from=builder /keria /keria
+COPY --from=builder --chown=keria:keria /home/keria /home/keria
 
-ENV PATH="/keria/.venv/bin:$PATH"
+USER keria
+
+ENV PATH="/home/keria/.venv/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-EXPOSE 3901
-EXPOSE 3902
-EXPOSE 3903
 ENTRYPOINT ["keria"]
 CMD ["start"]
