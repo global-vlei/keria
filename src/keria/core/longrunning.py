@@ -443,16 +443,62 @@ class Monitor:
                 operation.done = False
 
         elif op.type in (OpTypes.credential,):
-            if "ced" not in op.metadata:
+            if "ced" not in op.metadata and "credential_said" not in op.metadata:
                 raise kering.ValidationError(
-                    f"invalid long running {op.type} operation, metadata missing 'ced' field"
+                    f"invalid long running {op.type} operation, metadata missing 'ced' or 'credential_said' field"
                 )
 
-            ced = op.metadata["ced"]
-            if self.credentialer.complete(ced["d"]):
+            credential_said = op.metadata.get("credential_said")
+            ced = op.metadata.get("ced")
+            if ced is not None:
+                credential_said = ced["d"]
+
+            group = op.metadata.get("group")
+            tel = op.metadata.get("tel")
+            if group is not None:
+                required = ("pre", "sn", "said")
+                if any(field not in group for field in required):
+                    raise kering.ValidationError(
+                        "invalid long running credential operation, group metadata missing required fields "
+                        "('pre', 'sn', 'said')"
+                    )
+                if tel is None or "sn" not in tel:
+                    raise kering.ValidationError(
+                        "invalid long running credential operation, group credential metadata missing TEL sequence"
+                    )
+
+                prefixer = coring.Prefixer(qb64=group["pre"])
+                seqner = coring.Seqner(sn=group["sn"])
+                saider = coring.Saider(qb64=group["said"])
+                if not self.counselor.complete(prefixer, seqner, saider):
+                    operation.metadata = dict(**op.metadata, state="kel-pending")
+                    operation.done = False
+                    return operation
+
+                if not self.registrar.complete(pre=credential_said, sn=tel["sn"]):
+                    operation.metadata = dict(**op.metadata, state="tel-pending")
+                    operation.done = False
+                    return operation
+
+            if ced is None:
                 operation.done = True
+                operation.metadata = (
+                    dict(**op.metadata, state="completed")
+                    if group is not None
+                    else op.metadata
+                )
+                operation.response = dict(credential_said=credential_said)
+            elif self.credentialer.complete(credential_said):
+                operation.done = True
+                operation.metadata = (
+                    dict(**op.metadata, state="completed")
+                    if group is not None
+                    else op.metadata
+                )
                 operation.response = dict(ced=ced)
             else:
+                if group is not None:
+                    operation.metadata = dict(**op.metadata, state="credential-pending")
                 operation.done = False
 
         elif op.type in (OpTypes.exchange,):
